@@ -1,163 +1,205 @@
 import java.util.EnumSet;
+import java.util.HashMap;
 
 
 public class Firewall 
 {
-
+	private HashMap<String, Role> subLvls;
+	private HashMap<String, Type> objLvls;
+	private Core myCore;
+	private SecureObject audit;
 	
-
-	//-------------------------------- ROLES -------------------------------------//
-	//Ordinary Users 	(SL, {SP}) 	(ISL, {IP})
-	private static Role ORDINARY = new Role(
-			Role.CLevels.SL,
-			EnumSet.of(Role.CCategories.SP),
-			Role.ILevels.ISL,
-			EnumSet.of(Role.ICategories.IP));
-	
-	//Application developers 	(SL, {SD}) 	(ISL, {ID})
-	private static Role APP_DEV = new Role(
-			Role.CLevels.SL,
-			EnumSet.of(Role.CCategories.SD),
-			Role.ILevels.ISL,
-			EnumSet.of(Role.ICategories.ID));
-	
-	//System programmers 	(SL, {SSD}) 	(ISL, {ID})
-	private static Role SYS_PROGMR = new Role(
-			Role.CLevels.SL,
-			EnumSet.of(Role.CCategories.SSD),
-			Role.ILevels.ISL,
-			EnumSet.of(Role.ICategories.ID));
-
-	//System managers/auditors 	(AM, {SP, SD, SSD}) 	(ISL, {IP, ID})
-	private static Role SYS_AUDTR = new Role(
-			Role.CLevels.AM,
-			EnumSet.of(Role.CCategories.SP, Role.CCategories.SD, Role.CCategories.SSD),
-			Role.ILevels.ISL,
-			EnumSet.of(Role.ICategories.IP, Role.ICategories.ID));
-
-	//System controllers 	(SL, {SP, SD}) 	(ISP, {IP, ID}) + downgrade
-	private static Role SYS_CONTRLR = new Role(
-			Role.CLevels.SL,
-			EnumSet.of(Role.CCategories.SP, Role.CCategories.SD),
-			Role.ILevels.ISP,
-			EnumSet.of(Role.ICategories.IP, Role.ICategories.ID)); //TODO DOWNGRADE!
-	
-	
-	//-------------------------------- TYPES -------------------------------------//
-	//Development code/test data 	(SL, {SD}) 	(ISL, {ID})
-	private static Type DEV_CODE = new Type(
-			Type.CLevels.SL,
-			EnumSet.of(Type.CCategories.SD),
-			Type.ILevels.ISL,
-			EnumSet.of(Type.ICategories.ID));
-	
-	//Production code 	(SL, {SP}) 	(IO, {IP})
-	private static Type PROD_CODE = new Type(
-			Type.CLevels.SL,
-			EnumSet.of(Type.CCategories.SP),
-			Type.ILevels.IO,
-			EnumSet.of(Type.ICategories.IP));
-	
-	//Production data 	(SL, {SP}) 	(ISL, {IP})
-	private static Type PROD_DATA = new Type(
-			Type.CLevels.SL,
-			EnumSet.of(Type.CCategories.SP),
-			Type.ILevels.ISL,
-			EnumSet.of(Type.ICategories.IP));
-	
-	//Software tools 	(SL, EMPTY) 	(IO, {ID})
-	private static Type TOOLS = new Type(
-			Type.CLevels.SL,
-			EnumSet.noneOf(Type.CCategories.class),
-			Type.ILevels.IO,
-			EnumSet.of(Type.ICategories.ID));
-	
-	//System programs 	(SL, EMPTY) 	(ISP, {IP, ID})
-	private static Type SYS_CODE = new Type(
-			Type.CLevels.SL,
-			EnumSet.noneOf(Type.CCategories.class),
-			Type.ILevels.ISP,
-			EnumSet.of(Type.ICategories.IP, Type.ICategories.ID));
-	
-	//System programs in modification 	(SL, {SSD} ) 	(ISL, {ID})
-	private static Type SYS_CODE_MOD = new Type(
-			Type.CLevels.SL,
-			EnumSet.of(Type.CCategories.SSD),
-			Type.ILevels.ISL,
-			EnumSet.of(Type.ICategories.ID));
-
-	//production log (AM, {SP}) 	(ISL, EMPTY)
-	private static Type SYS_LOG_SP = new Type(Type.CLevels.AM, 
-			EnumSet.of(Type.CCategories.SP),
-			Type.ILevels.ISL,
-			EnumSet.noneOf(Type.ICategories.class));
-	
-	//developer log (AM, {SD}) 	(ISL, EMPTY)
-	private static Type SYS_LOG_SD = new Type(Type.CLevels.AM, 
-			EnumSet.of(Type.CCategories.SD),
-			Type.ILevels.ISL,
-			EnumSet.noneOf(Type.ICategories.class));
-	
-	//system developer log (AM, {SSD}) 	(ISL, EMPTY)
-	private static Type SYS_LOG_SSD = new Type(Type.CLevels.AM, 
-			EnumSet.of(Type.CCategories.SSD),
-			Type.ILevels.ISL,
-			EnumSet.noneOf(Type.ICategories.class));
-	
-	
-	public static class UnitTests
+	public Firewall()
 	{
-		public static void main(String[] args)
+		subLvls = new HashMap<String, Role>();
+		objLvls = new HashMap<String, Type>();
+		myCore = new Core();
+		audit = new SecureObject();
+	}
+
+	public void printAudit()
+	{
+		//TODO are failures verbose enough?
+		System.out.println(audit.getData());
+	}
+	
+	private void runAudit(String object_name)
+	{
+		
+	}
+	
+	public void executeInstruction(Instruction instr)
+	{
+		Instruction.Commands command = instr.command;
+		String auditString = instr.toString() + "\n";
+		
+		if(command.equals(Instruction.Commands.AUDIT)) 
 		{
-			System.out.print("Testing... ");
-			//assert(false);
-			//TODO downgrade special case
+			myCore.coreObjects.put(instr.object_name, audit);
+			objLvls.put(instr.object_name, instr.object_type);
+			auditString += "Successful.";
+		}
+		else if(command.equals(Instruction.Commands.CREATE_SUBJECT))
+		{
+			if(!subLvls.containsKey(instr.subject_name)) //subject doesn't already exist
+			{
+				subLvls.put(instr.subject_name, instr.subject_role);
+				auditString += "Successful.";
+			}
+			else
+				auditString += "Failure. Subject " + instr.subject_name + " already exists.";
+		}
+		else if(command.equals(Instruction.Commands.CREATE_OBJECT))
+		{
+			if(!objLvls.containsKey(instr.object_name)) //object doesn't already exist
+			{
+				if(subLvls.get(instr.subject_name).canWrite(instr.object_type))
+				{
+				
+					objLvls.put(instr.object_name, instr.object_type);
+					myCore.coreObjects.put(instr.object_name, new SecureObject());
+					auditString += "Successful.";
+				}
+				else
+					auditString += "Failure. Subject " + instr.subject_name + " does not have write access.";
+			}
+			else
+				auditString += "Failure. Object " + instr.object_name + " already exists.";
+		}
+		else if(command.equals(Instruction.Commands.READ))
+		{
+			if(subLvls.containsKey(instr.subject_name))
+			{
+				if(objLvls.containsKey(instr.object_name)) //object exists 	
+				{
+					if(subLvls.get(instr.subject_name).canRead(objLvls.get(instr.object_name)))
+					{
+						auditString += "Successful.";
+					}
+					else
+						auditString += "Failure. Subject " + instr.subject_name + " does not have read access.";
+				}
+				else
+					auditString += "Failure. Object " + instr.object_name + " does not exist.";
+			}
+			else 
+				auditString += "Failure. Subject " + instr.subject_name + " does not exist.";
+		}	
+		else if(command.equals(Instruction.Commands.WRITE))
+		{
+			if(subLvls.containsKey(instr.subject_name))
+			{
+				if(objLvls.containsKey(instr.object_name)) //object exists 	
+				{
+					if(subLvls.get(instr.subject_name).canWrite(objLvls.get(instr.object_name)))
+					{
+						auditString += "Successful.";
+					}
+					else
+						auditString += "Failure. Subject " + instr.subject_name + " does not have write access.";
+				}
+				else
+					auditString += "Failure. Object " + instr.object_name + " does not exist.";
+			}
+			else 
+				auditString += "Failure. Subject " + instr.subject_name + " does not exist.";
+		
+		}
+		else if(command.equals(Instruction.Commands.DOWNGRADE))
+		{
+			if(subLvls.containsKey(instr.subject_name))
+			{
+				if(objLvls.containsKey(instr.object_name)) //object exists 	
+				{
+					if(subLvls.get(instr.subject_name) == Role.SYS_CONTRLR)
+					{
+						Type currentLvl = objLvls.get(instr.object_name);
+						Type newLvl = instr.object_type;
+						
+						if(
+						(currentLvl == Type.DEV_CODE && newLvl == Type.PROD_CODE)
+						||
+						(currentLvl == Type.SYS_CODE_MOD && newLvl == Type.SYS_CODE))
+						{	
+							objLvls.put(instr.object_name, newLvl);
+							auditString += "Successful.";
+						}
+						else
+							auditString += "Failure. Cannot downgrade from " + currentLvl + " to " + newLvl;
+					}
+					else
+						auditString += "Failure. Subject " + instr.subject_name + " is not a System Controller.";
+				}
+				else
+					auditString += "Failure. Object " + instr.object_name + " does not exist.";
+			}
+			else 
+				auditString += "Failure. Subject " + instr.subject_name + " does not exist.";
+		}
+		
+		audit.addData(auditString);
+	}
+
+	private class Core
+	{
+		private HashMap<String, SecureObject> coreObjects;
+		
+		public Core() 
+		{
+			coreObjects = new HashMap<String, SecureObject>();
+		}
+		
+		public void executeInstruction(Instruction instr)
+		{
+			Instruction.Commands command = instr.command;
 			
-			assert(ORDINARY.cantBoth(DEV_CODE));
-			assert(ORDINARY.canOnlyRead(PROD_CODE));
-			assert(ORDINARY.canBoth(PROD_DATA));
-			assert(ORDINARY.cantBoth(TOOLS));
-			assert(ORDINARY.canOnlyRead(SYS_CODE));
-			assert(ORDINARY.cantBoth(SYS_CODE_MOD));
-			assert(ORDINARY.canOnlyWrite(SYS_LOG_SP));
-			
-			assert(APP_DEV.canBoth(DEV_CODE));
-			assert(APP_DEV.cantBoth(PROD_CODE));
-			assert(APP_DEV.cantBoth(PROD_DATA));
-			assert(APP_DEV.canOnlyRead(TOOLS));
-			assert(APP_DEV.canOnlyRead(SYS_CODE));
-			assert(APP_DEV.cantBoth(SYS_CODE_MOD));
-			assert(APP_DEV.canOnlyWrite(SYS_LOG_SD));
-			
-			assert(SYS_PROGMR.cantBoth(DEV_CODE));
-			assert(SYS_PROGMR.cantBoth(PROD_CODE));
-			assert(SYS_PROGMR.cantBoth(PROD_DATA));
-			assert(SYS_PROGMR.canOnlyRead(TOOLS));
-			assert(SYS_PROGMR.canOnlyRead(SYS_CODE));
-			assert(SYS_PROGMR.canBoth(SYS_CODE_MOD));
-			assert(SYS_PROGMR.canOnlyWrite(SYS_LOG_SSD));
-			
-			assert(SYS_AUDTR.cantBoth(DEV_CODE));
-			assert(SYS_AUDTR.cantBoth(PROD_CODE));
-			assert(SYS_AUDTR.cantBoth(PROD_DATA));
-			assert(SYS_AUDTR.cantBoth(TOOLS));
-			assert(SYS_AUDTR.canOnlyRead(SYS_CODE));
-			assert(SYS_AUDTR.cantBoth(SYS_CODE_MOD));
-			assert(SYS_AUDTR.cantBoth(SYS_LOG_SP));
-			assert(SYS_AUDTR.cantBoth(SYS_LOG_SD));
-			assert(SYS_AUDTR.cantBoth(SYS_LOG_SSD));
-			
-			assert(SYS_CONTRLR.cantBoth(DEV_CODE));
-			assert(SYS_CONTRLR.cantBoth(PROD_CODE));
-			assert(SYS_CONTRLR.cantBoth(PROD_DATA));
-			assert(SYS_CONTRLR.cantBoth(TOOLS));
-			assert(SYS_CONTRLR.canOnlyRead(SYS_CODE));
-			assert(SYS_CONTRLR.cantBoth(SYS_CODE_MOD));
-			assert(SYS_CONTRLR.cantBoth(SYS_LOG_SP));
-			assert(SYS_CONTRLR.cantBoth(SYS_LOG_SD));
-			assert(SYS_CONTRLR.cantBoth(SYS_LOG_SSD));
-			
-			System.out.println("done.");
+			if(command.equals(Instruction.Commands.AUDIT)) 
+			{
+				myCore.coreObjects.put(instr.object_name, audit);
+				objLvls.put(instr.object_name, instr.object_type);
+			}
+			else if(command.equals(Instruction.Commands.CREATE_SUBJECT))
+			{
+				subLvls.put(instr.subject_name, instr.subject_role);
+			}
+			else if(command.equals(Instruction.Commands.CREATE_OBJECT))
+			{
+				objLvls.put(instr.object_name, instr.object_type);
+				myCore.coreObjects.put(instr.object_name, new SecureObject());
+			}
+			else if(command.equals(Instruction.Commands.READ))
+			{
+				//nop
+			}	
+			else if(command.equals(Instruction.Commands.WRITE))
+			{
+				//nop
+			}
+			else if(command.equals(Instruction.Commands.DOWNGRADE))
+			{
+				Type newLvl = instr.object_type;
+				objLvls.put(instr.object_name, newLvl);
+			}
+		}
+	}
+
+	private class SecureObject
+	{
+		private String data;
+		
+		public SecureObject()
+		{
+			data = "";
+		}
+		
+		public void addData(String newData)
+		{
+			data += (newData + "\n\n");
+		}
+		
+		public String getData()
+		{
+			return data;
 		}
 	}
 }
