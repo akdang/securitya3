@@ -12,6 +12,7 @@ public class Role
 	public static enum ILevels {ISL, IO, ISP}	//low to high
 	public static enum CCategories {SP, SD, SSD}
 	public static enum ICategories {ID, IP}
+	public static HashMap<String, Role> roles = new HashMap<String, Role>();
 	
 	public Role(CLevels cLevel, EnumSet<CCategories> cCats, ILevels iLevel, EnumSet<ICategories> iCats, String name)
 	{
@@ -20,6 +21,19 @@ public class Role
 		this.cCategories = cCats;
 		this.iCategories = iCats;
 		this.name = name;
+		
+	}
+	
+	public static void populateHash()
+	{
+		if(roles.size() == 0)
+		{
+			roles.put(ORDINARY.name, ORDINARY);
+			roles.put(APP_DEV.name, APP_DEV);
+			roles.put(SYS_PROGMR.name, SYS_PROGMR);
+			roles.put(SYS_AUDTR.name, SYS_AUDTR);
+			roles.put(SYS_CONTRLR.name, SYS_CONTRLR);
+		}
 	}
 	
 	public String toString()
@@ -137,12 +151,30 @@ public class Role
 
 class Type extends Role //just a clone of Role, named Type for clarity
 {
+	//hash of all types
+	public static HashMap<String, Type> types = new HashMap<String, Type>();
+	
 	public Type(CLevels cLevel, EnumSet<CCategories> cCats, ILevels iLevel, EnumSet<ICategories> iCats, String name)
 	{
 		super(cLevel, cCats, iLevel, iCats, name);
 	}
 	
+	public static void populateHash()
+	{
+		if(types.size() == 0)
+		{
+			types.put(DEV_CODE.name, DEV_CODE);
+			types.put(PROD_CODE.name, PROD_CODE);
+			types.put(PROD_DATA.name, PROD_DATA);
+			types.put(TOOLS.name, TOOLS);
+			types.put(SYS_CODE.name, SYS_CODE);
+			types.put(SYS_CODE_MOD.name, SYS_CODE_MOD);
+			types.put(SYS_LOG.name, SYS_LOG);
+		}
+	}
+	
 	//-------------------------------- TYPES -------------------------------------//
+		
 	//Development code/test data 	(SL, {SD}) 	(ISL, {ID})
 	public static Type DEV_CODE = new Type(
 			Type.CLevels.SL,
@@ -197,59 +229,6 @@ class Type extends Role //just a clone of Role, named Type for clarity
 			Type.ILevels.ISL,
 			EnumSet.noneOf(Type.ICategories.class),
 			"SYS_LOG");
-}
-
-
-class UnitTests
-{
-	public static void main(String[] args)
-	{
-		System.out.print("Testing... ");
-		//assert(false);
-		//TODO downgrade special case
-		
-		assert(Role.ORDINARY.cantBoth(Type.DEV_CODE));
-		assert(Role.ORDINARY.canOnlyRead(Type.PROD_CODE));
-		assert(Role.ORDINARY.canBoth(Type.PROD_DATA));
-		assert(Role.ORDINARY.cantBoth(Type.TOOLS));
-		assert(Role.ORDINARY.canOnlyRead(Type.SYS_CODE));
-		assert(Role.ORDINARY.cantBoth(Type.SYS_CODE_MOD));
-		assert(Role.ORDINARY.canOnlyWrite(Type.SYS_LOG));
-		
-		assert(Role.APP_DEV.canBoth(Type.DEV_CODE));
-		assert(Role.APP_DEV.cantBoth(Type.PROD_CODE));
-		assert(Role.APP_DEV.cantBoth(Type.PROD_DATA));
-		assert(Role.APP_DEV.canOnlyRead(Type.TOOLS));
-		assert(Role.APP_DEV.canOnlyRead(Type.SYS_CODE));
-		assert(Role.APP_DEV.cantBoth(Type.SYS_CODE_MOD));
-		assert(Role.APP_DEV.canOnlyWrite(Type.SYS_LOG));
-		
-		assert(Role.SYS_PROGMR.cantBoth(Type.DEV_CODE));
-		assert(Role.SYS_PROGMR.cantBoth(Type.PROD_CODE));
-		assert(Role.SYS_PROGMR.cantBoth(Type.PROD_DATA));
-		assert(Role.SYS_PROGMR.canOnlyRead(Type.TOOLS));
-		assert(Role.SYS_PROGMR.canOnlyRead(Type.SYS_CODE));
-		assert(Role.SYS_PROGMR.canBoth(Type.SYS_CODE_MOD));
-		assert(Role.SYS_PROGMR.canOnlyWrite(Type.SYS_LOG));
-		
-		assert(Role.SYS_AUDTR.cantBoth(Type.DEV_CODE));
-		assert(Role.SYS_AUDTR.cantBoth(Type.PROD_CODE));
-		assert(Role.SYS_AUDTR.cantBoth(Type.PROD_DATA));
-		assert(Role.SYS_AUDTR.cantBoth(Type.TOOLS));
-		assert(Role.SYS_AUDTR.canOnlyRead(Type.SYS_CODE));
-		assert(Role.SYS_AUDTR.cantBoth(Type.SYS_CODE_MOD));
-		assert(Role.SYS_AUDTR.canOnlyWrite(Type.SYS_LOG));
-		
-		assert(Role.SYS_CONTRLR.cantBoth(Type.DEV_CODE));
-		assert(Role.SYS_CONTRLR.cantBoth(Type.PROD_CODE));
-		assert(Role.SYS_CONTRLR.cantBoth(Type.PROD_DATA));
-		assert(Role.SYS_CONTRLR.cantBoth(Type.TOOLS));
-		assert(Role.SYS_CONTRLR.canOnlyRead(Type.SYS_CODE));
-		assert(Role.SYS_CONTRLR.cantBoth(Type.SYS_CODE_MOD));
-		assert(Role.SYS_CONTRLR.canOnlyWrite(Type.SYS_LOG));
-		
-		System.out.println("done.");
-	}
 }
 
 
