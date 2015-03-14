@@ -1,0 +1,1 @@
+biba integrity and blp conf = lipner model
